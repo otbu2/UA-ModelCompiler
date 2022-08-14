@@ -17,6 +17,7 @@ RUN \
 # stage 'release':
 FROM bitnami/dotnet:6 as release
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
+ENV DOTNET_NOLOGO=1
 
 # copy copy the files from the 'build' stage:
 COPY \
