@@ -1,17 +1,32 @@
-FROM mono:latest
-ADD . /tmp/app-build
-WORKDIR /tmp/app-build
-ADD https://dist.nuget.org/win-x86-commandline/latest/nuget.exe /tmp/app-build/nuget.exe
-RUN mono nuget.exe install -OutputDirectory packages ModelCompiler/packages.config
-RUN msbuild "ModelCompiler Solution.sln" /t:Restore /t:Build /p:Configuration=Release
+# stage 'build':
+FROM bitnami/dotnet-sdk:6 as build
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
+ENV DOTNET_NOLOGO=1
 
-# Only keep the compiled files
-RUN mv /tmp/app-build/Bin/Release /app
+ADD . /tmp/UA-ModelCompiler/source
+WORKDIR /tmp/UA-ModelCompiler
+
+# build the application:
+RUN \
+  dotnet publish "source/ModelCompiler Solution.sln" \
+  --verbosity quiet \
+  --no-self-contained \
+  --configuration Release \
+  --output build
+
+# stage 'release':
+FROM bitnami/dotnet:6 as release
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
+
+# copy copy the files from the 'build' stage:
+COPY \
+  --from=build \
+  /tmp/UA-ModelCompiler/build /app/
+
 # Copy the necessary design files used by the model compiler
-RUN mv /tmp/app-build/ModelCompiler/Design* /app
-RUN mv /tmp/app-build/PublishModel.* /app
+COPY \
+  --from=build \
+  /tmp/UA-ModelCompiler/source/Opc.Ua.ModelCompiler/Design* /app/
 
-WORKDIR /app
-RUN rm -rf /tmp/app-build
-
-ENTRYPOINT ["mono", "/app/Opc.Ua.ModelCompiler.exe"]
+ENV PATH=${PATH}:/app
+ENTRYPOINT ["Opc.Ua.ModelCompiler"]
