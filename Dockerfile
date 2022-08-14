@@ -34,12 +34,6 @@ COPY \
   ${_MODELCOMPILER_BUILDROOT}/source/Opc.Ua.ModelCompiler/Design* \
   ${_MODELCOMPILER_INSTALLDIR}/
 
-# Copy the necessary design files used by the model compiler:
-# COPY \
-#   --from=build \
-#   ${_MODELCOMPILER_BUILDROOT}/source/Opc.Ua.ModelCompiler/Design* \
-#   ${_MODELCOMPILER_INSTALLDIR}/
-
 RUN useradd modelcompiler_user
 USER modelcompiler_user
 ENV PATH=${PATH}:${_MODELCOMPILER_INSTALLDIR}
