@@ -1,10 +1,16 @@
+
+# private ARGs (constants):
+ARG _MODELCOMPILER_BUILDROOT=/tmp/UA-ModelCompiler
+ARG _MODELCOMPILER_INSTALLDIR=/opt/UA-ModelCompiler
+
 # stage 'build':
 FROM bitnami/dotnet-sdk:6 as build
+ARG _MODELCOMPILER_BUILDROOT
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
 ENV DOTNET_NOLOGO=1
 
-ADD . /tmp/UA-ModelCompiler/source
-WORKDIR /tmp/UA-ModelCompiler
+ADD . ${_MODELCOMPILER_BUILDROOT}/source
+WORKDIR ${_MODELCOMPILER_BUILDROOT}
 
 # build the application:
 RUN \
@@ -16,18 +22,25 @@ RUN \
 
 # stage 'release':
 FROM bitnami/dotnet:6 as release
+ARG _MODELCOMPILER_BUILDROOT
+ARG _MODELCOMPILER_INSTALLDIR
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
 ENV DOTNET_NOLOGO=1
 
-# copy copy the files from the 'build' stage:
+# copy needed files from the 'build' stage:
 COPY \
   --from=build \
-  /tmp/UA-ModelCompiler/build /app/
+  ${_MODELCOMPILER_BUILDROOT}/build \
+  ${_MODELCOMPILER_BUILDROOT}/source/Opc.Ua.ModelCompiler/Design* \
+  ${_MODELCOMPILER_INSTALLDIR}/
 
-# Copy the necessary design files used by the model compiler
-COPY \
-  --from=build \
-  /tmp/UA-ModelCompiler/source/Opc.Ua.ModelCompiler/Design* /app/
+# Copy the necessary design files used by the model compiler:
+# COPY \
+#   --from=build \
+#   ${_MODELCOMPILER_BUILDROOT}/source/Opc.Ua.ModelCompiler/Design* \
+#   ${_MODELCOMPILER_INSTALLDIR}/
 
-ENV PATH=${PATH}:/app
+RUN useradd modelcompiler_user
+USER modelcompiler_user
+ENV PATH=${PATH}:${_MODELCOMPILER_INSTALLDIR}
 ENTRYPOINT ["Opc.Ua.ModelCompiler"]
