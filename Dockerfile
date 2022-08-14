@@ -1,10 +1,13 @@
 
-# private ARGs (constants):
+# public args with defaults:
+ARG BITNAMI_DOTNET_TAG=6
+
+# private args (constants):
 ARG _MODELCOMPILER_BUILDROOT=/tmp/UA-ModelCompiler
 ARG _MODELCOMPILER_INSTALLDIR=/opt/UA-ModelCompiler
 
 # stage 'build':
-FROM bitnami/dotnet-sdk:6 as build
+FROM bitnami/dotnet-sdk:${BITNAMI_DOTNET_TAG} as build
 ARG _MODELCOMPILER_BUILDROOT
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
 ENV DOTNET_NOLOGO=1
@@ -21,7 +24,7 @@ RUN \
   --output build
 
 # stage 'release':
-FROM bitnami/dotnet:6 as release
+FROM bitnami/dotnet:${BITNAMI_DOTNET_TAG} as release
 ARG _MODELCOMPILER_BUILDROOT
 ARG _MODELCOMPILER_INSTALLDIR
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
